@@ -16,6 +16,7 @@ class OpenWeatherMap {
   private:
     String getMsgBody(Measurement measurements[], uint8_t n);
     String parse(Measurement measurement);
+    bool isValid(Measurement measurement);
 
     String url;
     String stationId;

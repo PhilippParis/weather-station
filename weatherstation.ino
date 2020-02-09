@@ -58,28 +58,29 @@ void setup() {
     }
   }
   println("DONE");
-  ESP.deepSleep(DEEP_SLEEP, buffer.size() >= (OWM_BATCH_SIZE - 1) ? WAKE_RF_DEFAULT : WAKE_RF_DISABLED);
+  ESP.deepSleep(DEEP_SLEEP, buffer.size() >= (OWM_BATCH_SIZE - 1) ? WAKE_RFCAL : WAKE_RF_DISABLED);
 }
 
 void loop() {}
 
 void publishToOpenWeatherMap(RTCMemory &buffer) {
   println("publish to OWM");
-  if (!connectToWifi(WIFI_SSID, WIFI_PASSWD)) {
-    return;
+  if (connectToWifi(WIFI_SSID, WIFI_PASSWD)) {
+    long dt = getEpochTime();
+    
+    if (dt > 0) {
+      for (int i = buffer.size() - 1; i >= 0; i--) {
+        buffer.read()[i].dt = dt;
+        dt -= DEEP_SLEEP / 1000000;
+      }
+    
+      OpenWeatherMap owm = OpenWeatherMap(OWM_API_KEY, OWM_STATION_ID);
+      if (owm.post(buffer.read(), buffer.size())) {
+        buffer.clear();
+      }
+    }
   }
-
-  long dt = getEpochTime();  
-  for (int i = buffer.size() - 1; i >= 0; i--) {
-    buffer.read()[i].dt = dt;
-    dt -= DEEP_SLEEP / 1000000;
-  }
-
-  OpenWeatherMap owm = OpenWeatherMap(OWM_API_KEY, OWM_STATION_ID);
-  if (owm.post(buffer.read(), buffer.size())) {
-    buffer.clear();
-  }
-  WiFi.disconnect();
+  WiFi.disconnect(true);
 }
 
 void transmitVia433Mhz(Measurement measurement) {
@@ -92,7 +93,9 @@ long getEpochTime() {
   WiFiUDP ntpUDP;
   NTPClient timeClient(ntpUDP, "pool.ntp.org", 0);
   timeClient.begin();
-  timeClient.update();
+  if (!timeClient.update()) {
+    return -1;
+  }
   return timeClient.getEpochTime();
 }
 
@@ -121,20 +124,23 @@ bool readFromHTU21DF(float &temperature, float& humidity) {
 }
 
 bool connectToWifi(const char* ssid, const char* password) {
-  println("Connecting to ");
-  println(ssid);
+  println("Connecting to wifi...");
+  WiFi.disconnect(true);
+  delay(1000);
+  WiFi.mode(WIFI_STA);
+  delay(1000);
   WiFi.begin(ssid, password);
   
   unsigned long wifiConnectStart = millis();
   while (WiFi.status() != WL_CONNECTED) {
     if (WiFi.status() == WL_CONNECT_FAILED) {
       println("Failed to connect to WiFi");
-      delay(10000);
+      return false;
     }
 
     delay(250);
     if (millis() - wifiConnectStart > WIFI_TIMEOUT) {
-      println("Failed to connect to WiFi");
+      println("Failed to connect to WiFi: timeout");
       return false;
     }
   }

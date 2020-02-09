@@ -25,9 +25,20 @@ String OpenWeatherMap::parse(Measurement m) {
 }
 
 String OpenWeatherMap::getMsgBody(Measurement measurements[], uint8_t n) {
-  String body = "[" + parse(measurements[0]);
-  for (int i = 1; i < n; i++) {
-    body += "," + parse(measurements[i]);
+  String body = "[";
+  for (int i = 0; i < n; i++) {
+    if (body.length() > 1) {
+      body += ",";
+    }
+    if (isValid(measurements[i])) {
+      body += parse(measurements[i]);
+    }
   }
   return body + "]";
 }
+
+bool OpenWeatherMap::isValid(Measurement m) {
+  return m.temperature > -40 && m.temperature < 50 && m.humidity >= 0 &&
+    m.humidity <= 100 && m.pressure > 0 && m.pressure < 1200;
+}
+

@@ -18,6 +18,9 @@ Measurement* RTCMemory::read() {
 }
 
 uint8_t RTCMemory::size() {
+  if (isFirstUse()) {
+    return 0;
+  }
   return data.size;
 }
 
