@@ -20,17 +20,22 @@ const uint8_t TX2_SENSOR_ID = 0x20;
 const uint8_t TX2_PIN = 13;
 
 // OPEN WEATHER MAP
-const uint8_t OWM_BATCH_SIZE = 12;
+const uint8_t OWM_BATCH_SIZE = 20;
 const char* OWM_API_KEY = SECRET_OWM_API_KEY;
 const char* OWM_STATION_ID = SECRET_OWM_STATION_ID;
 
 // WIFI
 const char* WIFI_SSID = SECRET_WIFI_SSID;
 const char* WIFI_PASSWD = SECRET_WIFI_PASSWD;
-const long WIFI_TIMEOUT = 10000;                  // 10 seconds
+const long WIFI_TIMEOUT = 5000;                  // 5 seconds
+const IPAddress STATIC_IP(192,168,178,201);
+const IPAddress GATEWAY(192,168,178,1);
+const IPAddress SUBNET(255,255,255,0);
+const IPAddress DNS_1(8,8,8,8);
+const IPAddress DNS_2(8,8,4,4);
 
 // OTHER
-const long DEEP_SLEEP = 1000000 * 60 * 5;         // 5 minutes
+const long DEEP_SLEEP = 1000000 * 60 * 3;        // 3 minutes
 
 void setup() {  
 #ifdef debug
@@ -86,7 +91,7 @@ void publishToOpenWeatherMap(RTCMemory &buffer) {
 void transmitVia433Mhz(Measurement measurement) {
   println("transmit via 433Mhz");
   TX2TempTransmitter tx2 = TX2TempTransmitter(TX2_SENSOR_ID, TX2_PIN);
-  tx2.transmit(measurement.temperature);
+  tx2.transmit(((float) measurement.temperature) / 100.0);
 }
 
 long getEpochTime() {
@@ -99,7 +104,7 @@ long getEpochTime() {
   return timeClient.getEpochTime();
 }
 
-bool readFromBMP180(float &pressure) {
+bool readFromBMP180(uint16_t &pressure) {
   Adafruit_BMP085_Unified bmp = Adafruit_BMP085_Unified(10085);
   if(!bmp.begin()) {
     println("BMP180 not detected!");
@@ -107,28 +112,27 @@ bool readFromBMP180(float &pressure) {
   }
   sensors_event_t event;
   bmp.getEvent(&event);
-  pressure = event.pressure;
+  pressure = (uint16_t) event.pressure;
   return true;
 }
 
-bool readFromHTU21DF(float &temperature, float& humidity) {
+bool readFromHTU21DF(int16_t &temperature, uint8_t& humidity) {
   Adafruit_HTU21DF htu = Adafruit_HTU21DF();
   if (!htu.begin()) {
     println("HTU21DF not detected!");
     return false;
   }
 
-  temperature = htu.readTemperature();
-  humidity = htu.readHumidity();  
+  temperature = (int16_t) (htu.readTemperature() * 100.0);
+  humidity = (uint8_t) htu.readHumidity();  
   return true;
 }
 
 bool connectToWifi(const char* ssid, const char* password) {
   println("Connecting to wifi...");
   WiFi.disconnect(true);
-  delay(1000);
+  WiFi.config(STATIC_IP, GATEWAY, SUBNET, DNS_1, DNS_2);
   WiFi.mode(WIFI_STA);
-  delay(1000);
   WiFi.begin(ssid, password);
   
   unsigned long wifiConnectStart = millis();
@@ -138,13 +142,12 @@ bool connectToWifi(const char* ssid, const char* password) {
       return false;
     }
 
-    delay(250);
+    delay(50);
     if (millis() - wifiConnectStart > WIFI_TIMEOUT) {
       println("Failed to connect to WiFi: timeout");
       return false;
     }
   }
-
   println("WiFi connected");
   return true;
 }

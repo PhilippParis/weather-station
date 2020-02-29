@@ -19,7 +19,7 @@ bool OpenWeatherMap::post(Measurement measurements[], uint8_t n) {
 String OpenWeatherMap::parse(Measurement m) {
   return "{\"station_id\":\"" + stationId + "\"," +
           "\"dt\":" + m.dt + "," +
-          "\"temperature\":" + m.temperature + "," +
+          "\"temperature\":" + ((float) m.temperature) / 100.0 + "," +
           "\"pressure\":" + m.pressure  + "," +
           "\"humidity\":" + m.humidity + "}";
 }
@@ -38,7 +38,7 @@ String OpenWeatherMap::getMsgBody(Measurement measurements[], uint8_t n) {
 }
 
 bool OpenWeatherMap::isValid(Measurement m) {
-  return m.temperature > -40 && m.temperature < 50 && m.humidity >= 0 &&
+  return m.temperature > -4000 && m.temperature < 5000 && m.humidity >= 0 &&
     m.humidity <= 100 && m.pressure > 0 && m.pressure < 1200;
 }
 

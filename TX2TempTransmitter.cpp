@@ -29,7 +29,7 @@ void TX2TempTransmitter::transmit(float temp) {
     for (uint8_t j = 0; j < 11; j++) {
       sendNibble(nibble[j]);
     }
-    delay(50);
+    delay(20);
   }
 }
 

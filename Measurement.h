@@ -3,9 +3,9 @@
 
 struct Measurement {
   unsigned long dt;
-  float temperature;
-  float humidity;
-  float pressure;
+  int16_t temperature;
+  uint8_t humidity;
+  uint16_t pressure;
 };
 
 #endif // MEASUREMENT_H

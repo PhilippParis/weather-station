@@ -5,7 +5,7 @@
 
 #include "Measurement.h"
 
-#define RTC_MEMORY_MAX_SIZE     (20)
+#define RTC_MEMORY_MAX_SIZE     (30)
 #define RTC_MEMORY_MAGIC_NUMBER (126)
 
 struct RTCData {

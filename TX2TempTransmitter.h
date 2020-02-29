@@ -3,8 +3,8 @@
 
 #include <ESP8266WiFi.h>
 
-#define TX2_LONG_PULSE (1300)
-#define TX2_SHORT_PULSE (500)
+#define TX2_LONG_PULSE (975)
+#define TX2_SHORT_PULSE (250)
 #define TX2_DELAY (1450)
 
 #define TX2_PREAMBLE_1 (0)
